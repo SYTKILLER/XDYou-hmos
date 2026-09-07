@@ -1,0 +1,88 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#000000"
+    },
+    {
+      "name": "app_bg",
+      "value": "#121316"
+    },
+    {
+      "name": "app_card",
+      "value": "#1E2126"
+    },
+    {
+      "name": "text_primary",
+      "value": "#E6E1E5"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#A8ADB4"
+    },
+    {
+      "name": "divider",
+      "value": "#2C2F33"
+    },
+    {
+      "name": "error",
+      "value": "#FFB4AB"
+    },
+    {
+      "name": "on_error",
+      "value": "#1B1B1F"
+    },
+    {
+      "name": "warning_bg",
+      "value": "#2E2416"
+    },
+    {
+      "name": "warning_border",
+      "value": "#5A4520"
+    },
+    {
+      "name": "warning_text",
+      "value": "#F2B155"
+    },
+    {
+      "name": "slider_track_rest",
+      "value": "#4A5058"
+    },
+    {
+      "name": "slider_track_active",
+      "value": "#81C995"
+    },
+    {
+      "name": "course_0",
+      "value": "#1F3B5C"
+    },
+    {
+      "name": "course_1",
+      "value": "#0E4A44"
+    },
+    {
+      "name": "course_2",
+      "value": "#1E4B22"
+    },
+    {
+      "name": "course_3",
+      "value": "#5C4300"
+    },
+    {
+      "name": "course_4",
+      "value": "#5C1A0B"
+    },
+    {
+      "name": "course_5",
+      "value": "#5C1136"
+    },
+    {
+      "name": "course_6",
+      "value": "#3A2A6B"
+    },
+    {
+      "name": "course_7",
+      "value": "#33383F"
+    }
+  ]
+}

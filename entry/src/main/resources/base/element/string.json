@@ -1,0 +1,416 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "XDYou 主模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "XDYou 西电校园助手"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "XDYou"
+    },
+    {
+      "name": "login_identity_number",
+      "value": "学号/工号"
+    },
+    {
+      "name": "login_password",
+      "value": "密码"
+    },
+    {
+      "name": "login_login",
+      "value": "登 录"
+    },
+    {
+      "name": "login_password_empty",
+      "value": "请输入密码"
+    },
+    {
+      "name": "login_progress_ready_page",
+      "value": "正在准备登录页…"
+    },
+    {
+      "name": "login_progress_get_encrypt",
+      "value": "正在获取加密密钥…"
+    },
+    {
+      "name": "login_progress_ready_login",
+      "value": "正在准备登录…"
+    },
+    {
+      "name": "login_progress_slider",
+      "value": "请完成滑块验证…"
+    },
+    {
+      "name": "login_progress_submitting",
+      "value": "正在提交登录…"
+    },
+    {
+      "name": "login_progress_after_process",
+      "value": "正在处理登录后事宜…"
+    },
+    {
+      "name": "login_slider_title",
+      "value": "滑块验证"
+    },
+    {
+      "name": "login_try_again",
+      "value": "再试一次"
+    },
+    {
+      "name": "login_captcha_fetch_failed",
+      "value": "滑块验证码拉取失败，请重试"
+    },
+    {
+      "name": "login_captcha_solved_failed",
+      "value": "验证码校验失败"
+    },
+    {
+      "name": "login_failed_wrong_password",
+      "value": "用户名或密码有误"
+    },
+    {
+      "name": "login_failed_connection",
+      "value": "无法连接服务器，请检查网络"
+    },
+    {
+      "name": "login_failed_with_code",
+      "value": "登录失败，响应状态码："
+    },
+    {
+      "name": "login_second_factor_unsupported",
+      "value": "该账号需要短信二次认证，暂不支持"
+    },
+    {
+      "name": "login_logout",
+      "value": "退出登录"
+    },
+    {
+      "name": "tab_home",
+      "value": "首页"
+    },
+    {
+      "name": "tab_features",
+      "value": "全部功能"
+    },
+    {
+      "name": "tab_settings",
+      "value": "设置"
+    },
+    {
+      "name": "home_schedule_card_title",
+      "value": "今日日程"
+    },
+    {
+      "name": "home_schedule_empty",
+      "value": "暂无后续安排"
+    },
+    {
+      "name": "home_ongoing",
+      "value": "进行中"
+    },
+    {
+      "name": "home_exam_card_title",
+      "value": "考试安排"
+    },
+    {
+      "name": "home_exam_none",
+      "value": "暂无未结束的考试"
+    },
+    {
+      "name": "home_refresh_failed",
+      "value": "刷新失败，请检查网络"
+    },
+    {
+      "name": "features_empty_title",
+      "value": "功能逐步上线中"
+    },
+    {
+      "name": "features_empty_subtitle",
+      "value": "已完成的模块会出现在这里"
+    },
+    {
+      "name": "settings_group_account",
+      "value": "账号"
+    },
+    {
+      "name": "settings_account_platform",
+      "value": "西电统一身份认证"
+    },
+    {
+      "name": "settings_schoolnet_title",
+      "value": "校园网自助服务"
+    },
+    {
+      "name": "settings_schoolnet_desc",
+      "value": "用于校园网自助服务查询（zfw.xidian.edu.cn），用户名使用当前登录学号"
+    },
+    {
+      "name": "settings_schoolnet_clear",
+      "value": "清除已保存密码"
+    },
+    {
+      "name": "settings_theme_color",
+      "value": "主题颜色"
+    },
+    {
+      "name": "settings_dark_mode",
+      "value": "深浅色"
+    },
+    {
+      "name": "settings_version",
+      "value": "版本"
+    },
+    {
+      "name": "common_save",
+      "value": "保存"
+    },
+    {
+      "name": "settings_logout",
+      "value": "退出登录"
+    },
+    {
+      "name": "settings_logout_confirm_title",
+      "value": "退出登录"
+    },
+    {
+      "name": "settings_logout_confirm_message",
+      "value": "退出后需要重新登录才能继续使用校园服务。"
+    },
+    {
+      "name": "common_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "common_retry",
+      "value": "重试"
+    },
+    {
+      "name": "common_refreshing",
+      "value": "正在刷新…"
+    },
+    {
+      "name": "classtable_title",
+      "value": "课程表"
+    },
+    {
+      "name": "classtable_loading",
+      "value": "正在加载课程表…"
+    },
+    {
+      "name": "classtable_empty_hint",
+      "value": "暂无课程数据（可能尚未发布或本学期无课）"
+    },
+    {
+      "name": "classtable_cache_hint",
+      "value": "当前为缓存数据"
+    },
+    {
+      "name": "exam_title",
+      "value": "考试安排"
+    },
+    {
+      "name": "exam_loading",
+      "value": "正在加载考试安排…"
+    },
+    {
+      "name": "exam_empty_hint",
+      "value": "暂无考试安排"
+    },
+    {
+      "name": "exam_cache_hint",
+      "value": "当前为缓存数据"
+    },
+    {
+      "name": "score_title",
+      "value": "成绩查询"
+    },
+    {
+      "name": "score_loading",
+      "value": "正在加载成绩…"
+    },
+    {
+      "name": "score_empty_hint",
+      "value": "暂无成绩数据"
+    },
+    {
+      "name": "score_cache_hint",
+      "value": "当前为缓存数据"
+    },
+    {
+      "name": "score_credit",
+      "value": "学分"
+    },
+    {
+      "name": "score_avg",
+      "value": "平均分"
+    },
+    {
+      "name": "score_gpa",
+      "value": "绩点"
+    },
+    {
+      "name": "score_filter_semester",
+      "value": "按学期筛选"
+    },
+    {
+      "name": "score_detail_none",
+      "value": "暂无成绩组成数据"
+    },
+    {
+      "name": "electricity_title",
+      "value": "电费查询"
+    },
+    {
+      "name": "electricity_loading",
+      "value": "正在查询电费…"
+    },
+    {
+      "name": "electricity_cache_hint",
+      "value": "当前为缓存数据"
+    },
+    {
+      "name": "electricity_refreshing",
+      "value": "正在刷新…"
+    },
+    {
+      "name": "electricity_remain_label",
+      "value": "剩余电量"
+    },
+    {
+      "name": "electricity_low_warning",
+      "value": "电量不足，请及时充值"
+    },
+    {
+      "name": "electricity_last_read",
+      "value": "上次抄表"
+    },
+    {
+      "name": "electricity_meter_section",
+      "value": "近一月电表读数"
+    },
+    {
+      "name": "electricity_water_section",
+      "value": "近一年水表读数"
+    },
+    {
+      "name": "electricity_history_section",
+      "value": "本地余量记录"
+    },
+    {
+      "name": "electricity_history_desc",
+      "value": "每次成功刷新自动记录，最多保留 15 条"
+    },
+    {
+      "name": "electricity_schoolnet_only",
+      "value": "能耗管理系统仅校园网环境下可用"
+    },
+    {
+      "name": "schoolnet_title",
+      "value": "校园网"
+    },
+    {
+      "name": "schoolnet_loading",
+      "value": "正在查询…"
+    },
+    {
+      "name": "schoolnet_online_section",
+      "value": "正在使用"
+    },
+    {
+      "name": "schoolnet_current_notice",
+      "value": "这是您正在使用中的校园网信息，可能与「校园网自助服务」中登录账号的数据不一致。\n注意：流量计费采用 GB 单位（1000 进制）。"
+    },
+    {
+      "name": "schoolnet_overview",
+      "value": "账户概览"
+    },
+    {
+      "name": "schoolnet_account",
+      "value": "账号"
+    },
+    {
+      "name": "schoolnet_offline",
+      "value": "当前未在线（或不在校园网环境）"
+    },
+    {
+      "name": "schoolnet_product",
+      "value": "套餐类型"
+    },
+    {
+      "name": "schoolnet_balance",
+      "value": "余额"
+    },
+    {
+      "name": "schoolnet_usage_situation",
+      "value": "流量使用情况"
+    },
+    {
+      "name": "schoolnet_used_traffic",
+      "value": "已使用流量"
+    },
+    {
+      "name": "schoolnet_remain",
+      "value": "剩余流量"
+    },
+    {
+      "name": "schoolnet_total_traffic",
+      "value": "总流量"
+    },
+    {
+      "name": "schoolnet_usage_section",
+      "value": "校园网自助服务"
+    },
+    {
+      "name": "schoolnet_used",
+      "value": "已使用"
+    },
+    {
+      "name": "schoolnet_rest",
+      "value": "剩余"
+    },
+    {
+      "name": "schoolnet_charged",
+      "value": "结算日"
+    },
+    {
+      "name": "schoolnet_devices",
+      "value": "在线设备"
+    },
+    {
+      "name": "schoolnet_usage_empty",
+      "value": "暂无自助服务数据"
+    },
+    {
+      "name": "schoolnet_usage_failed",
+      "value": "自助服务数据获取失败"
+    },
+    {
+      "name": "schoolnet_cache_hint",
+      "value": "当前为缓存数据"
+    },
+    {
+      "name": "schoolnet_login_section",
+      "value": "登录自助服务"
+    },
+    {
+      "name": "schoolnet_captcha_hint",
+      "value": "请输入图片验证码"
+    },
+    {
+      "name": "schoolnet_captcha_refresh",
+      "value": "换一张"
+    },
+    {
+      "name": "schoolnet_password_missing",
+      "value": "查询密码未配置：请到「设置 → 平台账号 → 校园网自助服务」配置后重试"
+    },
+    {
+      "name": "common_confirm",
+      "value": "确认"
+    }
+  ]
+}
