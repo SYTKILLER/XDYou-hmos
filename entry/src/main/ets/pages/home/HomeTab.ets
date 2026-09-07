@@ -7,13 +7,11 @@ import { SchoolnetController } from '../../controller/SchoolnetController';
 import { HomeArrangement } from '../../model/HomeArrangement';
 import { Subject } from '../../model/exam/ExamData';
 import { BorrowData } from '../../model/library/LibraryModels';
-import { CurrentUserNetInfo } from '../../model/schoolnet/NetworkUsage';
+import { CurrentUserNetInfo, formatBytes } from '../../model/schoolnet/NetworkUsage';
 import { EnergyInfo } from '../../model/energy/EnergyData';
 import { AppNav } from '../../service/nav/AppNav';
 import { TAB_BAR_CLEARANCE } from './HomeLayout';
 import { Log } from '../../utils/Log';
-
-const BYTES_PER_GB: number = 1073741824;
 
 /**
  * 首页页签（"此刻"聚焦版）：
@@ -21,6 +19,8 @@ const BYTES_PER_GB: number = 1073741824;
  * 考试态展示时间/考场/座位，21:25 后展示明天）+ 需要留意提醒条（电费低于阈值/图书临期/
  * 考试临近，Hero 已是考试态时去重考试条）+ 2×2 信息瓦片（考试倒计时/宿舍电费/图书借阅/校园网流量）。
  * Refresh 下拉全量刷新；整分定时器 nowTick 驱动进度条与倒计时刷新。
+ * 各控制器版本号（classTable/exam/energy/library/schoolnet Version）在取数方法中真实读取：
+ * 静默刷新完成后展示节点立即重建，不等整分 tick（NOTICE 2026-09-06 刷新依赖教训）。
  */
 @Component
 export struct HomeTab {
@@ -28,6 +28,12 @@ export struct HomeTab {
   @StorageProp('themePrimary') themePrimary: string = '#0A59F7';
   @StorageProp('themePrimaryContainer') themePrimaryContainer: string = '#D0E4FF';
   @StorageProp('nowTick') tick: number = Date.now();
+  // 控制器版本号：取数方法内真实读取建立刷新依赖（bumpVersion 自增 → 展示节点立即重建）。
+  @StorageProp('classTableVersion') classTableVersion: number = 0;
+  @StorageProp('examVersion') examVersion: number = 0;
+  @StorageProp('energyVersion') energyVersion: number = 0;
+  @StorageProp('libraryVersion') libraryVersion: number = 0;
+  @StorageProp('schoolnetVersion') schoolnetVersion: number = 0;
   @State refreshing: boolean = false;
   @State silentRefreshed: boolean = false;
 
@@ -35,6 +41,7 @@ export struct HomeTab {
     ClassTableController.loadCache();
     ExamController.loadCache();
     EnergyController.loadCache();
+    SchoolnetController.loadCache();
     // 静默全量刷新（与 HomePageView 的启动刷新共享 inflight，不会重复请求）：
     // 完成后必须翻转 @State 强制重渲染，否则各卡要等下一个整分 nowTick 才更新。
     HomepageController.refreshAll().then((): void => {
@@ -99,7 +106,9 @@ export struct HomeTab {
   // ---- Hero：合并时间线（课程+考试）取最近一条未结束日程 ----
 
   private heroItem(): HomeArrangement | null {
-    const items: HomeArrangement[] = HomepageController.currentSchedule(this.nowDate()).items;
+    const version: number = this.classTableVersion + this.examVersion;
+    const items: HomeArrangement[] = version >= 0
+      ? HomepageController.currentSchedule(this.nowDate()).items : [];
     return items.length > 0 ? items[0] : null;
   }
 
@@ -218,7 +227,9 @@ export struct HomeTab {
   }
 
   private heroNext(): HomeArrangement | null {
-    const items: HomeArrangement[] = HomepageController.currentSchedule(this.nowDate()).items;
+    const version: number = this.classTableVersion + this.examVersion;
+    const items: HomeArrangement[] = version >= 0
+      ? HomepageController.currentSchedule(this.nowDate()).items : [];
     return items.length > 1 ? items[1] : null;
   }
 
@@ -242,7 +253,8 @@ export struct HomeTab {
 
   /** 电费余量（度）；无数据为 null。 */
   private energyRemain(): number | null {
-    if (!EnergyController.hasData()) {
+    const version: number = this.energyVersion;
+    if (!EnergyController.hasData() || version < 0) {
       return null;
     }
     const info: EnergyInfo | null = EnergyController.data();
@@ -261,8 +273,10 @@ export struct HomeTab {
 
   /** 7 天内到期的最近一本；无则 null。 */
   private nearestDueBook(): BorrowData | null {
+    const version: number = this.libraryVersion;
     let nearest: BorrowData | null = null;
-    LibraryController.borrowData().forEach((b: BorrowData): void => {
+    const list: BorrowData[] = version >= 0 ? LibraryController.borrowData() : [];
+    list.forEach((b: BorrowData): void => {
       if (b.lendDay() > 7) {
         return;
       }
@@ -289,7 +303,8 @@ export struct HomeTab {
   }
 
   private upcomingExam(): Subject | null {
-    const list: Subject[] = ExamController.isNotFinished(this.nowDate());
+    const version: number = this.examVersion;
+    const list: Subject[] = version >= 0 ? ExamController.isNotFinished(this.nowDate()) : [];
     return list.length > 0 ? list[0] : null;
   }
 
@@ -324,7 +339,8 @@ export struct HomeTab {
   }
 
   private examTileSub(): string {
-    const list: Subject[] = ExamController.isNotFinished(this.nowDate());
+    const version: number = this.examVersion;
+    const list: Subject[] = version >= 0 ? ExamController.isNotFinished(this.nowDate()) : [];
     if (list.length === 0) {
       return '点击查看考试安排';
     }
@@ -345,7 +361,8 @@ export struct HomeTab {
   }
 
   private borrowTileMain(): string {
-    const n: number = LibraryController.borrowData().length;
+    const version: number = this.libraryVersion;
+    const n: number = version >= 0 ? LibraryController.borrowData().length : 0;
     return n > 0 ? `在借 ${n} 本` : '暂无在借';
   }
 
@@ -364,22 +381,17 @@ export struct HomeTab {
     return `最近到期 ${d} 天后`;
   }
 
-  private netOnline(): CurrentUserNetInfo | null {
-    const info: CurrentUserNetInfo | null = SchoolnetController.userInfoData();
-    return info !== null && info.isOnline() ? info : null;
-  }
-
+  /** 瓦片与校园网页面"流量使用情况"区同口径：rad_user_info 快照（不判 isOnline，页面同款）。 */
   private netTileMain(): string {
-    const info: CurrentUserNetInfo | null = this.netOnline();
-    return info !== null ? `${(info.remainBytes / BYTES_PER_GB).toFixed(1)} G` : '暂无数据';
+    const version: number = this.schoolnetVersion;
+    const info: CurrentUserNetInfo | null = version >= 0 ? SchoolnetController.userInfoData() : null;
+    return info !== null ? formatBytes(info.sumBytes) : '暂无数据';
   }
 
   private netTileSub(): string {
-    const info: CurrentUserNetInfo | null = this.netOnline();
-    if (info === null) {
-      return '点击查看校园网';
-    }
-    return `已用 ${(info.sumBytes / BYTES_PER_GB).toFixed(1)} G`;
+    const version: number = this.schoolnetVersion;
+    const info: CurrentUserNetInfo | null = version >= 0 ? SchoolnetController.userInfoData() : null;
+    return info !== null ? `剩余 ${formatBytes(info.remainBytes)}` : '点击查看校园网';
   }
 
   private doRefresh(): void {

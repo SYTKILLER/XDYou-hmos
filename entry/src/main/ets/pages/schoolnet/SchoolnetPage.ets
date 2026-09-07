@@ -30,6 +30,7 @@ export struct SchoolnetPage {
 
   aboutToAppear(): void {
     // 缓存命中直接就绪，避免重进页面闪加载态；infoLoaded 必须被下方 if 条件读取才建立刷新依赖。
+    SchoolnetController.loadCache();
     this.infoLoaded = SchoolnetController.hasUserInfo();
     this.loadUserInfo();
     this.loadUsage();
