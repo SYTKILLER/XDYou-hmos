@@ -13,7 +13,7 @@
 - **源项目**：`traintime_pda-1.6.4/` **只读**，不修改；产物全部落在 `entry/src/main/ets/`。
 - **范围决策（2026-09-05 确认）**：核心优先（登录 + 16 个信息查询模块 + 首页聚合 + 设置）；睿思论坛/上课提醒/日历导出/服务卡片后置里程碑；i18n 首期仅 zh_CN（目录按多语言预留）；真机验证用 DevEco 签名（signingConfigs 当前为空，由用户配置）。
 - **范围决策（2026-09-06 修订）**：登录后框架为**三页签**（首页/全部功能/设置，悬浮毛玻璃底栏，详见 PORTING_PLAN.md §5 阶段 3 修订版）；**睿思论坛、猪图鉴赏（Pig）放弃移植**；页面 UI 按鸿蒙设计语言重设计、不复刻 Flutter 布局（数据逻辑与原版对齐）；首页首期仅日程+考试两卡，全部功能页只列已移植功能；图标一律用 HarmonyOS Symbol（SymbolGlyph + sys.symbol，名称以 SDK sysResource.js 符号表为准）。
-- **范围决策（2026-09-07 修订）**：首页改版为"此刻"聚焦版（Hero 课程/考试双形态卡 + 需要留意提醒条 + 2×2 信息瓦片：考试/电费/图书/校园网），`refreshAll` 扩源 5 路并行（校园网 zfw 需验证码不可静默刷，只刷免验证码在线信息）；HomeArrangement 加 `type` 字段（course/exam）供 Hero 分形态；`EnergyController.data()` 返回可空，hasData() 后仍须判空。
+- **范围决策（2026-09-07 修订）**：首页改版为"此刻"聚焦版（Hero 课程/考试双形态卡 + 需要留意提醒条 + 2×2 信息瓦片：考试/电费/图书/校园网），`refreshAll` 扩源 5 路并行；校园网瓦片显示已用/剩余流量（rad_user_info 快照，与校园网页面"流量使用情况"区同口径，快照落盘 `schoolnet_user.json` 冷启动直读；**不判 isOnline**——error:"ok" 是成功响应）；zfw 自助用量需验证码仅由页面拉取（内存/磁盘缓存只作页面验证码失败回退）；HomeArrangement 加 `type` 字段（course/exam）供 Hero 分形态；`EnergyController.data()` 返回可空，hasData() 后仍须判空；首页各瓦片取数方法内必须真实读取控制器版本号 `@StorageProp('xxxVersion')` 建立刷新依赖（详见 NOTICE）。
 - **UI 约束**：全部 ArkUI 系统内置组件组合（Navigation/Tabs/List/Grid/WaterFlow/SymbolGlyph…），零第三方依赖、不引组件库、不自绘封装；弹窗用系统 AlertDialog / CustomDialog 规范模式。
 
 ## 2. 编译验证（强制）

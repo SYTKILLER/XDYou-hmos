@@ -39,6 +39,9 @@ export struct ClassTablePage {
   @State dataVersion: number = 0;
   private listScroller: ListScroller = new ListScroller();
   private swiperController: SwiperController = new SwiperController();
+  // 仅首帧定位 Swiper（普通成员，值不变则属性不重应用）。若绑定响应式 weekIndex，程序化切周时
+  // 属性重应用会瞬跳到目标页、吞掉 changeIndex 动画；后续位置变化一律由 swiperController 驱动。
+  private initialWeek: number = 0;
   private thumbReady: boolean = false;
   private thumbInitialized: boolean = false;
   // 课程详情弹窗：点击格子时才创建（延迟创建，成员初始化器创建会导致白屏，见 ScorePage 同款）。
@@ -49,6 +52,7 @@ export struct ClassTablePage {
     const current: number = ClassTableController.getCurrentWeek(new Date());
     this.weekIndex = current >= 0 ? current : 0;
     this.clampWeek();
+    this.initialWeek = this.weekIndex;
     this.refresh();
   }
 
@@ -71,6 +75,25 @@ export struct ClassTablePage {
     }
   }
 
+  /**
+   * 程序化切周统一入口（缩略图点击/箭头/Select）。index 属性变更与 changeIndex 默认都无动画
+   * （官方文档：useAnimation 默认 NO_ANIMATION），必须显式带动效：
+   * 近距（±2 周内）整页弹簧滑动；远距 FAST_ANIMATION 先瞬移邻页再短滑，避免横扫十几页的长动画。
+   * 顺序不可换：先 changeIndex 从当前页起播动画，后写 weekIndex（.index 属性同目标更新幂等）。
+   */
+  private switchToWeek(target: number): void {
+    const t: number = Math.min(Math.max(target, 0), this.semesterLength() - 1);
+    if (t === this.weekIndex) {
+      return;
+    }
+    if (Math.abs(t - this.weekIndex) > 2) {
+      this.swiperController.changeIndex(t, SwiperAnimationMode.FAST_ANIMATION);
+    } else {
+      this.swiperController.changeIndex(t, true);
+    }
+    this.weekIndex = t;
+  }
+
   private semesterText(): string {
     const code: string = ClassTableController.data().semesterCode;
     return code.length > 0 ? code : '学期未知，请刷新';
@@ -87,6 +110,12 @@ export struct ClassTablePage {
       }
       this.clampWeek();
       this.dataVersion++;
+      // dataVersion 变更按 key 重建 Swiper/List 子组件；显式无动画回到当前周/居中，
+      // 若组件内部位置本就保留则 changeIndex/scrollToIndex 到同一位置为无操作。
+      this.swiperController.changeIndex(this.weekIndex, false);
+      if (this.thumbReady) {
+        this.listScroller.scrollToIndex(this.weekIndex, false, ScrollAlign.CENTER);
+      }
     }).catch((e: Object): void => {
       this.busy = false;
       this.errorMsg = `${e}`;
@@ -281,7 +310,7 @@ export struct ClassTablePage {
     .borderRadius(12)
     .backgroundColor(this.weekIndex === week ? this.themePrimaryContainer : $r('app.color.app_card'))
     .onClick(() => {
-      this.weekIndex = week;
+      this.switchToWeek(week);
     })
   }
 
@@ -314,24 +343,20 @@ export struct ClassTablePage {
             .fontSize(20)
             .fontColor([this.themePrimary])
             .onClick(() => {
-              if (this.weekIndex > 0) {
-                this.weekIndex--;
-              }
+              this.switchToWeek(this.weekIndex - 1);
             })
           Select(this.weekOptions())
             .selected(this.weekIndex)
             .value(this.weekLabel())
             .font({ size: 14 })
             .onSelect((index: number): void => {
-              this.weekIndex = index;
+              this.switchToWeek(index);
             })
           SymbolGlyph($r('sys.symbol.chevron_right'))
             .fontSize(20)
             .fontColor([this.themePrimary])
             .onClick(() => {
-              if (this.weekIndex < this.semesterLength() - 1) {
-                this.weekIndex++;
-              }
+              this.switchToWeek(this.weekIndex + 1);
             })
           Blank()
           SymbolGlyph($r('sys.symbol.arrow_clockwise'))
@@ -406,7 +431,8 @@ export struct ClassTablePage {
             }
           })
 
-          // 主表 Swiper：每页 = 日期行 + 周几表头 + 节次列 + 该周课程网格，左右滑动切周
+          // 首帧定位用 initialWeek（不变量）；切周动画全走 swiperController.changeIndex，
+          // 属性若绑定响应式 weekIndex，动画中属性重应用会瞬跳吞掉动画。
           Swiper(this.swiperController) {
             ForEach(this.weekRange(), (w: number) => {
               Column() {
@@ -505,7 +531,7 @@ export struct ClassTablePage {
               .height('100%')
             }, (w: number) => `week-${w}-${this.dataVersion}`)
           }
-          .index(this.weekIndex)
+          .index(this.initialWeek)
           .loop(false)
           .indicator(false)
           .cachedCount(1)

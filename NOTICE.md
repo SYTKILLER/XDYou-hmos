@@ -136,3 +136,10 @@
 
 - **build-profile.json5 的 signingConfigs 不入库**：仓库版清空签名配置，本地真实签名配置保留并以 `git update-index --skip-worktree build-profile.json5` 屏蔽差异（防止 git add . 误传签名材料）；需提交该文件的结构性改动时先 `git update-index --no-skip-worktree build-profile.json5`。
 - 原始 Flutter 工程 `traintime_pda-1.6.4/` 与 `.debug`/`.zcode`/`hap_extract`/日志/临时 dump 均被 .gitignore 排除，仓库只含 HarmonyOS 工程本体与项目文档；README 使用的 `icon_preview.png` 有意保留入库。
+
+## 2026-09-08 · Swiper 程序化切页默认无动画
+
+- **Swiper 的 `index` 属性变更与 `SwiperController.changeIndex()` 默认都是无动画瞬跳**（d.ts/官方文档：changeIndex 的 useAnimation 默认 NO_ANIMATION）——程序化翻页必须 `changeIndex(t, true)`；API 15+ 远距跳页用 `SwiperAnimationMode.FAST_ANIMATION`（先瞬移邻页再短滑）。先 changeIndex 起播动画再写绑定的状态变量（属性同目标更新幂等），顺序反过来属性更新会先瞬跳、changeIndex 到位后不再有动画。Swiper 默认 interpolatingSpring 曲线下 `.duration()` 不生效，除非显式换非弹簧 curve（会牺牲手势回弹手感）。
+- **Swiper 混用 index 属性与 SwiperController 时，属性只许作首帧定位**：`.index()` 绑响应式变量后，changeIndex 动画期间任何状态变更引发的属性重应用都会瞬跳目标页吞掉动画——绑普通成员（值不变），运行期切换全走 changeIndex / onChange，数据刷新重建子组件后用 `changeIndex(index, false)` 无动画重定位。
+- **rad_user_info 成功响应的 `error` 字段是 `"ok"`**（非空）→ `CurrentUserNetInfo.isOnline()`（判 error.length===0）对在线设备也返回 false。展示"正在使用/流量使用情况"数据一律别拿 isOnline 当门禁（照抄 SchoolnetPage：只看 hasUserInfo/数据非空）。
+- **首页瓦片类"静态字段直读"的刷新依赖**：只在 build 某个 if 条件里读 @State 救不了兄弟节点；必须让展示数据的取数方法内真实读取会变化的 `@StorageProp('xxxVersion')`（控制器 bumpVersion 自增），该 Text 节点才会在数据到达后重建。

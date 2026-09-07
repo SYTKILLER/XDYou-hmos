@@ -381,3 +381,41 @@
 - 签名材料不入库：仓库版 `build-profile.json5` 清空 `signingConfigs`；本地真实签名配置原样保留，用 `git update-index --skip-worktree` 屏蔽差异。README 构建说明已注明克隆后需自行配置签名。
 - 排除范围：`traintime_pda-1.6.4/`（上游只读参考，README 链接）、`.debug`/`.zcode`/`.reasonix`/`hap_extract`/`oh_modules`/`local.properties`/各类日志与临时 dump；`icon_preview.png` 保留作为 README 头图。
 - 远程仓库：https://github.com/SYTKILLER/XDYou-hmos.git（main 分支）。
+
+## 2026-09-08 · 校园网瓦片改显已用/剩余流量 + zfw 用量放弃式静默刷
+
+- 用户反馈首页校园网卡总显"暂无数据"。根因：瓦片只读 `rad_user_info`（w.xidian.edu.cn 仅校园网可达），且 `SchoolnetController.userInfo` 纯内存态无任何缓存/持久化，请求一失败（校外/网关未认证）就永远空。
+- 改法（用户指定显示 zfw"流量使用情况"的已用流量）：瓦片优先 `usageData()`（`GeneralNetworkUsage.used/rest` 与校园网页面同源的成品字符串），无则回退 rad_user_info（`formatBytes(sumBytes/remainBytes)`，1000 进制同原版口径），再无占位。
+- 新增 `SchoolnetController.refreshUsageSilently()`：验证码处理器恒返回空串（会话层语义=放弃→按验证码失败回退内存缓存）。zfw 会话 Cookie 经 `SessionManager.save('schoolnet')` 持久化，冷启动会话有效时 `/home` 直抓成功免验证码；过期则放弃登录链绝不弹窗。`refreshAll` 扩至 6 路 allSettled。
+- 编译门禁 BUILD SUCCESSFUL（0 error）。待真机验证：zfw 会话过期场景的静默放弃、校外环境瓦片降级文案。
+
+## 2026-09-08 · 课表切周动画修复（changeIndex 显式动效）
+
+- 用户反馈：点击周缩略图切周无任何动画。官方文档定案根因：Swiper 的 `index` 属性变更仅"设置索引值"无动画承诺；`SwiperController.changeIndex(index, useAnimation)` 的 `useAnimation` **默认 false（NO_ANIMATION）**——两路都是瞬时跳页。
+- 修复：新增 `switchToWeek(target)` 程序化切周统一入口（缩略图点击/箭头/Select 三路接入）。近距（|Δ|≤2 周）`changeIndex(t, true)`（DEFAULT_ANIMATION 整页弹簧滑动）；远距（Select 跳周/甩到远处卡）`changeIndex(t, SwiperAnimationMode.FAST_ANIMATION)`（API 15：先瞬移邻页再短距滑动，避免横扫十几页的长动画）。调用顺序固定：先 changeIndex 从当前页起播动画，后写 weekIndex（.index 属性同目标更新幂等，@Watch 照常滚动缩略图居中）。
+- 不设 `.duration()/.curve()`：官方文档明确 Swiper 默认曲线 interpolatingSpring 时 duration 不生效，动改曲线会连带改变手势松手回弹（失去速度延续手感），保留默认弹簧。
+- 主表滑动切周（手势 onChange 路径）与数据刷新后的直接赋值定位（refresh 后 weekIndex=current，属性瞬时重定位）均不走动画，行为保持。缩略图条沿用 `scrollToIndex(smooth=true, CENTER)` 官方带动画滚动。
+- 编译门禁：assembleHap BUILD SUCCESSFUL（0 error）。待真机确认：changeIndex 弹簧动画观感、FAST_ANIMATION 远距跳转表现。
+
+## 2026-09-08 · 校园网用量磁盘缓存（首页瓦片直读缓存）+ 缓存链路收口
+
+- 用户反馈首页校园网瓦片仍"暂无数据"：rad_user_info/zfw 均仅校园网可达，且用量缓存纯内存态，冷启动必空。照 ExamSession 模式落盘：GeneralNetworkUsage 补 toCacheJson/fromCacheJson（新增 IpUsageRowJson/GeneralNetworkUsageJson），SchoolnetSession 增 CACHE_FILE='schoolnet_usage.json'。
+- 写入收口 storeUsage()（内存 + fetchTime + 磁盘三写，/home 直抓与登录链两条成功路径共用）；失败回退改 getCacheData()（内存优先、磁盘兜底并回填内存）——"验证码放弃回退缓存"场景冷启动后也有缓存可回。
+- SchoolnetController.loadCache()（与 ExamController.loadCache 同模式，已有数据不覆盖）接入 HomeTab / SchoolnetPage 的 aboutToAppear；cacheFetchTime 内存记录优先、文件 mtime 兜底。
+- 缓存更新逻辑核查结论：成功写路径全部收口 storeUsage 无旁路；密码未配置/密码错误不回退缓存（照搬 Dart 语义）；学期切换清理不适用（用量为计费周期数据，非学期域）；登出不清业务缓存与 exam/energy 同口径（同设备换账号会读到上一账号用量，项目级既有取舍）。
+- 编译门禁 BUILD SUCCESSFUL（0 error）。首次仍需在校园网内成功抓取一次（校园网页面完成登录），此后冷启动直读缓存。
+
+## 2026-09-08 · 课表切周动画二次修复（index 属性与 changeIndex 动画竞争）
+
+- 真机反馈：上一轮 changeIndex(t, true) 后主表仍无动画。定案第二层根因：Swiper 的 `.index()` 属性绑定响应式 weekIndex，switchToWeek 里 changeIndex 起播动画后 `weekIndex = t` 触发重渲染，属性重应用把 Swiper 瞬跳到目标页、吞掉进行中的动画（index 属性语义就是"设置当前显示索引"，与 controller 动画竞争）。
+- 修复：`.index()` 改绑普通成员 `initialWeek`（aboutToAppear 里 clamp 后赋值一次，值不变则属性永不重应用）——属性只作首帧定位；后续位置变化全部由 swiperController 驱动：程序化切周走 changeIndex(带动效)，手势切周走 onChange 回写 weekIndex（不再触碰属性）。refresh().then() 在 dataVersion++（按 key 重建子组件）后补 `changeIndex(weekIndex, false)` 与缩略图 `scrollToIndex(false, CENTER)` 无动画重定位（位置若保留则为无操作）。
+- 编译门禁：assembleHap BUILD SUCCESSFUL（0 error）。待真机确认主表弹簧滑动动画。
+
+## 2026-09-08 · 校园网瓦片三轮排障：数据源纠正 + isOnline 门禁移除 + 版本号刷新依赖
+
+- hdc 真机遥控排障（hilog -T XDYou + snapshot_display + uitest uiInput）逐层定位三处问题：
+  1. **数据源选错**：用户所指"流量使用情况"是页面 rad_user_info 区块（已使用 2.51 TB/剩余 0 B），而非 zfw 自助服务（该账号实为 0byte/0.00，zfw 抓取解析无错、数据本身就为零）。瓦片改读 `SchoolnetController.userInfoData()`，`formatBytes(sumBytes/remainBytes)` 与页面同口径。
+  2. **isOnline 门禁误杀**：rad_user_info 成功响应的 `error` 字段是 `"ok"`（非空），`isOnline()`（error.length===0）恒 false → 瓦片把成功数据判成无数据。移除门禁，与 SchoolnetPage 一致（只看 hasUserInfo/数据非空）。已在 NOTICE 记录该语义坑。
+  3. **瓦片无刷新依赖**：`rad_user_info done` 后瓦片仍"暂无数据"——`netTileMain/Sub` 不读 nowTick，控制器静态字段变更不触发任何已挂载节点重建。修复：新增 5 个 `@StorageProp`（classTable/exam/energy/library/schoolnet Version），在全部取数方法（heroItem/heroNext/upcomingExam/energyRemain/nearestDueBook/各瓦片）内真实读取，bumpVersion 自增即重建。
+- rad_user_info 快照落盘：CurrentUserNetInfo.toCacheJson（snake_case 同形）→ schoolnet_user.json；SchoolnetController.loadCache 冷启动双缓存直读（user + zfw usage）。refreshAll 撤 zfw 静默刷回 5 路（refreshUsageSilently 已删，zfw 数据仅剩页面回退用途）。
+- 真机证据：hilog `rad_user_info done sum=2512718593284 remain=0`；`/data/app/el2/100/base/com.xdyou.app/haps/entry/cache/schoolnet_user.json` 内容与页面"流量使用情况"区一致。编译门禁 BUILD SUCCESSFUL（0 error）。终验（瓦片视觉）因真机进入睡眠锁屏（指纹）改由用户解锁后确认。

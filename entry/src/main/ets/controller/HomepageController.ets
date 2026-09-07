@@ -81,7 +81,8 @@ export class HomepageController {
   /**
    * 全量刷新：学期一次 → 课表/考试/电费/图书/校园网并行；单源失败不阻断另一源
    * （allSettled，失败记日志，由各控制器缓存/错误态呈现）。并发调用共享同一 in-flight。
-   * 校园网只刷免验证码的在线信息（rad_user_info）；需验证码的自助用量仅由其页面拉取。
+   * 校园网瓦片取 rad_user_info（免登录态、校外可达，成功后快照落盘供冷启动直读）；
+   * zfw 自助用量需验证码交互，仅由校园网页面拉取。
    */
   static refreshAll(): Promise<void> {
     if (HomepageController.inflight !== null) {

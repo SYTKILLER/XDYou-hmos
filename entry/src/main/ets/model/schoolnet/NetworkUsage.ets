@@ -31,6 +31,46 @@ export class GeneralNetworkUsage {
     this.rest = rest;
     this.charged = charged;
   }
+
+  toCacheJson(): GeneralNetworkUsageJson {
+    const rows: IpUsageRowJson[] = [];
+    this.ipList.forEach((r: IpUsageRow): void => {
+      rows.push({ ip: r.ip, onlineTime: r.onlineTime, used: r.used });
+    });
+    return { ipList: rows, used: this.used, rest: this.rest, charged: this.charged };
+  }
+
+  static fromCacheJson(p: GeneralNetworkUsageJson): GeneralNetworkUsage {
+    const rows: IpUsageRow[] = [];
+    if (p.ipList !== undefined) {
+      p.ipList.forEach((j: IpUsageRowJson): void => {
+        rows.push(new IpUsageRow(
+          j.ip !== undefined ? j.ip : '',
+          j.onlineTime !== undefined ? j.onlineTime : '',
+          j.used !== undefined ? j.used : ''
+        ));
+      });
+    }
+    return new GeneralNetworkUsage(rows,
+      p.used !== undefined ? p.used : '',
+      p.rest !== undefined ? p.rest : '',
+      p.charged !== undefined ? p.charged : '');
+  }
+}
+
+// ---- 缓存 JSON 形状 ----
+
+export interface IpUsageRowJson {
+  ip?: string;
+  onlineTime?: string;
+  used?: string;
+}
+
+export interface GeneralNetworkUsageJson {
+  ipList?: IpUsageRowJson[];
+  used?: string;
+  rest?: string;
+  charged?: string;
 }
 
 /**
@@ -66,6 +106,16 @@ export class CurrentUserNetInfo {
     this.bytesIn = bytesIn;
     this.bytesOut = bytesOut;
     this.userBalance = userBalance;
+  }
+
+  /** 磁盘缓存序列化（snake_case 与接口原文同形，用 fromJson 还原）。 */
+  toCacheJson(): CurrentUserNetInfoJson {
+    return {
+      error: this.error, real_name: this.realName, user_name: this.userName, online_ip: this.onlineIp,
+      products_name: this.productsName, billing_name: this.billingName,
+      all_bytes: this.allBytes, sum_bytes: this.sumBytes, remain_bytes: this.remainBytes,
+      bytes_in: this.bytesIn, bytes_out: this.bytesOut, user_balance: this.userBalance
+    };
   }
 
   static fromJson(j: CurrentUserNetInfoJson): CurrentUserNetInfo {

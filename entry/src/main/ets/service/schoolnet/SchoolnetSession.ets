@@ -3,8 +3,9 @@ import { CryptoUtil } from '../../utils/crypto/CryptoUtil';
 import { NetworkSession, SessionOptions, SessionResponse } from '../network/NetworkSession';
 import { SessionManager } from '../SessionManager';
 import { PreferenceService } from '../preference/PreferenceService';
-import { GeneralNetworkUsage, IpUsageRow, CurrentUserNetInfo, CurrentUserNetInfoJson } from '../../model/schoolnet/NetworkUsage';
+import { GeneralNetworkUsage, IpUsageRow, CurrentUserNetInfo, CurrentUserNetInfoJson, GeneralNetworkUsageJson } from '../../model/schoolnet/NetworkUsage';
 import { FetchResult } from '../../model/FetchResult';
+import { AppContext } from '../AppContext';
 import { Log } from '../../utils/Log';
 
 /**
@@ -32,14 +33,69 @@ const RAD_USER_INFO_URL: string = 'https://w.xidian.edu.cn/cgi-bin/rad_user_info
  * 2. zfw 自助服务（schoolnet 会话，HTML 抓取）——已用/剩余/结算 + 在线设备列表；
  *    未登录时走登录链：/login 提取 csrf 与 RSA 公钥 → 图片验证码（UI 交互）→
  *    RSA-PKCS1 加密密码 → /site/validate-user 校验 → POST / 登录 → /home 抓取。
- * 用量解析失败/验证码放弃/网络异常时可回退内存缓存（密码错误/未配置不回退，照搬 Dart）。
+ * 用量解析失败/验证码放弃/网络异常时可回退缓存（内存优先、磁盘兜底，照搬 Dart 回退语义）。
  */
 export class SchoolnetSession {
+  static readonly CACHE_FILE: string = 'schoolnet_usage.json';
+  static readonly USER_CACHE_FILE: string = 'schoolnet_user.json';
+
   private static generalUsageCache: GeneralNetworkUsage | null = null;
   private static generalUsageCacheFetchTime: number = 0;
 
   private static account(): string {
     return PreferenceService.getString('idsAccount', '');
+  }
+
+  /**
+   * 用量缓存读取：内存命中直接返回；未命中读磁盘并回填内存——
+   * 供首页/页面冷启动直读，也让"验证码放弃回退缓存"在冷启动后依然有缓存可回。
+   */
+  static getCacheData(): GeneralNetworkUsage | null {
+    if (SchoolnetSession.generalUsageCache !== null) {
+      return SchoolnetSession.generalUsageCache;
+    }
+    const text: string | null = AppContext.readCacheText(SchoolnetSession.CACHE_FILE);
+    if (text === null || text.length === 0) {
+      return null;
+    }
+    try {
+      const usage: GeneralNetworkUsage =
+        GeneralNetworkUsage.fromCacheJson(JSON.parse(text) as GeneralNetworkUsageJson);
+      SchoolnetSession.generalUsageCache = usage;
+      return usage;
+    } catch (e) {
+      Log.warn(`schoolnet usage cache parse failed: ${e}`);
+      return null;
+    }
+  }
+
+  /** 缓存抓取时间：内存记录优先，磁盘回落文件 mtime（秒精度×1000）。 */
+  static cacheFetchTime(): number {
+    if (SchoolnetSession.generalUsageCacheFetchTime > 0) {
+      return SchoolnetSession.generalUsageCacheFetchTime;
+    }
+    return AppContext.cacheModifiedMs(SchoolnetSession.CACHE_FILE);
+  }
+
+  /** 成功抓取后统一落缓存（内存 + 磁盘）；所有写缓存路径必须经过这里。 */
+  private static storeUsage(usage: GeneralNetworkUsage): void {
+    SchoolnetSession.generalUsageCache = usage;
+    SchoolnetSession.generalUsageCacheFetchTime = Date.now();
+    AppContext.writeCacheText(SchoolnetSession.CACHE_FILE, JSON.stringify(usage.toCacheJson()));
+  }
+
+  /** 在线信息快照读取（冷启动首页瓦片直读，与页面"流量使用情况"同数据源）。 */
+  static getUserCacheData(): CurrentUserNetInfo | null {
+    const text: string | null = AppContext.readCacheText(SchoolnetSession.USER_CACHE_FILE);
+    if (text === null || text.length === 0) {
+      return null;
+    }
+    try {
+      return CurrentUserNetInfo.fromJson(JSON.parse(text) as CurrentUserNetInfoJson);
+    } catch (e) {
+      Log.warn(`schoolnet user cache parse failed: ${e}`);
+      return null;
+    }
   }
 
   /**
@@ -59,6 +115,8 @@ export class SchoolnetSession {
     const jsonString: string = raw.substring(6, raw.length - 1);
     const info: CurrentUserNetInfo = CurrentUserNetInfo.fromJson(JSON.parse(jsonString) as CurrentUserNetInfoJson);
     info.syncDisplayName();
+    // 无论 error 位是否为空都落盘：数据本身（套餐/已用/剩余）与页面"流量使用情况"区一致可用。
+    AppContext.writeCacheText(SchoolnetSession.USER_CACHE_FILE, JSON.stringify(info.toCacheJson()));
     return info;
   }
 
@@ -80,8 +138,7 @@ export class SchoolnetSession {
       const home: SessionResponse = await schoolnet.get(`${ZFW_BASE}/home`, new SessionOptions());
       if (!home.isRedirect) {
         const usage: GeneralNetworkUsage = SchoolnetSession.parseUsage(home.bodyText);
-        SchoolnetSession.generalUsageCache = usage;
-        SchoolnetSession.generalUsageCacheFetchTime = Date.now();
+        SchoolnetSession.storeUsage(usage);
         SessionManager.save('schoolnet');
         return FetchResult.fresh<GeneralNetworkUsage>(usage);
       }
@@ -160,19 +217,18 @@ export class SchoolnetSession {
 
       const usagePage: SessionResponse = await schoolnet.get(`${ZFW_BASE}/home`, new SessionOptions());
       const usage: GeneralNetworkUsage = SchoolnetSession.parseUsage(usagePage.bodyText);
-      SchoolnetSession.generalUsageCache = usage;
-      SchoolnetSession.generalUsageCacheFetchTime = Date.now();
+      SchoolnetSession.storeUsage(usage);
       SessionManager.save('schoolnet');
       return FetchResult.fresh<GeneralNetworkUsage>(usage);
     } catch (e) {
       const message: string = `${e}`;
       const canUseCache: boolean = message.includes('验证码') || message.includes('自助服务')
         || message.includes('网络') || message.includes('连接') || message.includes('超时');
-      if (SchoolnetSession.generalUsageCache !== null && canUseCache) {
+      const cached: GeneralNetworkUsage | null = SchoolnetSession.getCacheData();
+      if (cached !== null && canUseCache) {
         Log.warn(`[SchoolnetSession] fallback usage cache: ${message}`);
         return FetchResult.cached<GeneralNetworkUsage>(
-          SchoolnetSession.generalUsageCache, SchoolnetSession.generalUsageCacheFetchTime,
-          'school_net.cache_hint_request_failed');
+          cached, SchoolnetSession.cacheFetchTime(), 'school_net.cache_hint_request_failed');
       }
       if (e instanceof Error) {
         throw e;

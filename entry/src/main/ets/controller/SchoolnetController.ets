@@ -13,6 +13,23 @@ export class SchoolnetController {
   private static infoInflight: Promise<void> | null = null;
   private static usageInflight: Promise<void> | null = null;
 
+  /**
+   * 冷启动直读磁盘缓存（cacheDir schoolnet_user.json / schoolnet_usage.json），
+   * 首页瓦片与校园网页面即时有数；已有更新数据（含 fresh）时不覆盖。与 ExamController.loadCache 同模式。
+   */
+  static loadCache(): void {
+    if (SchoolnetController.userInfo === null) {
+      SchoolnetController.userInfo = SchoolnetSession.getUserCacheData();
+    }
+    if (SchoolnetController.usage === null) {
+      const cached: GeneralNetworkUsage | null = SchoolnetSession.getCacheData();
+      if (cached !== null) {
+        SchoolnetController.usage = FetchResult.cached<GeneralNetworkUsage>(
+          cached, SchoolnetSession.cacheFetchTime(), 'school_net.cache_hint_network_failed');
+      }
+    }
+  }
+
   static hasUserInfo(): boolean {
     return SchoolnetController.userInfo !== null;
   }

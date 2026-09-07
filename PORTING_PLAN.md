@@ -184,7 +184,7 @@ CAS 协议流程（已在源码确认）：
 > 3. 页面 UI 按 HarmonyOS 设计语言用系统组件重新设计（不复刻 Flutter 布局）；数据逻辑（聚合/周次/过滤/协议）与原版对齐。
 > 4. 关键 API 已核实 SDK d.ts（API 24 可用）：Swiper@7、Refresh@8、ListItemGroup@10、SymbolGlyph@11、backgroundBlurStyle@11（BlurStyle.COMPONENT_THICK@12）、expandSafeArea@11、window.setWindowBackgroundColor。
 > 5. 首页首期仅「今日日程」+「考试安排」两卡；全部功能页只展示已移植功能；设置页账号区首字符头像 + 尽力取真实姓名（回退学号）。
-> 6. **修订决策（2026-09-07，用户确认）**：首页改版为"此刻"聚焦版——Hero 卡（课程/考试双形态：合并时间线取最近一条未结束日程，课程上完考试自然顶到首位；考试态展示时间/考场/座位 + 分钟级倒计时）+ "需要留意"提醒条（电费低于阈值/图书 7 天内到期/考试临近，Hero 考试态去重）+ 2×2 信息瓦片（考试倒计时/宿舍电费/图书借阅/校园网流量）；refreshAll 扩源 5 路 allSettled（校园网仅刷免验证码的在线信息，zfw 自助用量仍由页面拉取）。替代第 5 条的两卡首期方案。
+> 6. **修订决策（2026-09-07，用户确认）**：首页改版为"此刻"聚焦版——Hero 卡（课程/考试双形态：合并时间线取最近一条未结束日程，课程上完考试自然顶到首位；考试态展示时间/考场/座位 + 分钟级倒计时）+ "需要留意"提醒条（电费低于阈值/图书 7 天内到期/考试临近，Hero 考试态去重）+ 2×2 信息瓦片（考试倒计时/宿舍电费/图书借阅/校园网流量）；refreshAll 扩源 6 路 allSettled（校园网：rad_user_info 直刷 + zfw 用量"放弃式"静默刷——会话有效直抓 /home，需验证码即放弃回退缓存，绝不弹窗）。替代第 5 条的两卡首期方案。
 
 1. **M1 三 Tab 悬浮底栏框架**：HomePageView（Swiper 3 页 keep-alive + 悬浮毛玻璃底栏 backgroundBlurStyle）、首页/全部功能/设置三页骨架、NavDestination 注册结构、窗口背景与安全区融合。
 2. **M2 学期 + 课程表**：SemesterSession、ClassTableSession（本科 ehall + 研究生 yjspt 双链路；调课/停课/补课合并算法照搬）、model/ClassTableData、ClassTableController（周次计算 termStartDay+7×weekSwift）、周视图课程表页。
