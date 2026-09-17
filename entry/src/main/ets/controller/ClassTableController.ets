@@ -151,7 +151,7 @@ export class ClassTableController {
   }
 
   /**
-   * 某周缩略图 25 格圆点（5 天 × 5 时段桶，行优先）：
+   * 某周缩略图 25 格圆点（行 = 时段桶早→晚，列 = 周一→周五，行优先；对齐原版 GridView 语义）：
    * occupied = 该周该天存在与桶相交的排课；
    * completed = 全部相交课程已上完（过去周恒真、未来周恒假，当前周按日期/结束时刻判定）。
    */
@@ -175,7 +175,7 @@ export class ClassTableController {
       for (let s = 0; s < ClassTableController.PREVIEW_SLOTS.length; s++) {
         const bucket: SlotBucket = ClassTableController.PREVIEW_SLOTS[s];
         if (t.start <= bucket.stop && t.stop >= bucket.start) {
-          const idx: number = (t.day - 1) * 5 + s;
+          const idx: number = s * 5 + (t.day - 1);
           dots[idx].occupied = true;
           maxStop[idx] = Math.max(maxStop[idx], t.stop);
         }
@@ -193,7 +193,7 @@ export class ClassTableController {
       for (let d = 0; d < 5; d++) {
         const dayDate: Date = new Date(startDay.getTime() + (weekIndex * 7 + d) * DateUtil.MS_PER_DAY);
         for (let s = 0; s < 5; s++) {
-          const idx: number = d * 5 + s;
+          const idx: number = s * 5 + d;
           if (!dots[idx].occupied) {
             continue;
           }

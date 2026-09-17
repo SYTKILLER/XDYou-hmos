@@ -36,6 +36,8 @@ export struct HomeTab {
   @StorageProp('schoolnetVersion') schoolnetVersion: number = 0;
   @State refreshing: boolean = false;
   @State silentRefreshed: boolean = false;
+  // onVisibleAreaChange 首次可见（冷启动）不触发重读，避免与 aboutToAppear 的 loadCache 重复。
+  private everVisible: boolean = false;
 
   aboutToAppear(): void {
     ClassTableController.loadCache();
@@ -708,6 +710,18 @@ export struct HomeTab {
       .height('100%')
     }
     .onRefreshing(() => this.doRefresh())
+    // 每次重新可见（切回首页页签 / 从电费等 NavDestination 返回）强制重读磁盘缓存并 bump 版本，
+    // 确保瓦片立即重建为最新数据（2026-09-09 电费瓦片不刷新问题）。
+    .onVisibleAreaChange([0.0], (isVisible: boolean, _currentRatio: number) => {
+      if (!isVisible) {
+        return;
+      }
+      if (this.everVisible) {
+        EnergyController.reloadFromCache();
+      } else {
+        this.everVisible = true;
+      }
+    })
     .width('100%')
     .height('100%')
   }

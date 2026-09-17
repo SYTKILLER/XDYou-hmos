@@ -187,7 +187,7 @@ export struct ClassTablePage {
     return ClassTableController.getCurrentWeek(new Date());
   }
 
-  /** 缩略图 5 行圆点（每行 5 格，行优先切自 25 元素数组）。 */
+  /** 缩略图 5 行圆点（每行 = 一个时段桶早→晚，5 列 = 周一~周五，与 getWeekDots 行优先布局一致）。 */
   private thumbRows(week: number): WeekDot[][] {
     const dots: WeekDot[] = ClassTableController.getWeekDots(week);
     const rows: WeekDot[][] = [];

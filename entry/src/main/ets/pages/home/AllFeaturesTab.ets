@@ -54,6 +54,10 @@ const FEATURE_ENTRIES: FeatureEntry[] = [
   {
     icon: $r('sys.symbol.compass'), title: '睿思导航', destination: 'webView',
     url: 'https://nav.xdruisi.cn/'
+  },
+  {
+    icon: $r('sys.symbol.square_and_pencil'), title: '请假', destination: 'webView',
+    url: 'https://service.xidian.edu.cn/v2/matter/start?id=189'
   }
 ];
 

@@ -46,7 +46,7 @@ export struct HomePageView {
         TabContent() {
           AllFeaturesTab()
         }
-        .tabBar(new BottomTabBarStyle(this.tabSymbol($r('sys.symbol.square_grid_2x2'), $r('sys.symbol.square_grid_2x2')),
+        .tabBar(new BottomTabBarStyle(this.tabSymbol($r('sys.symbol.square_grid_2x2'), $r('sys.symbol.square_fill_grid_2x2')),
           $r('app.string.tab_features')))
 
         TabContent() {

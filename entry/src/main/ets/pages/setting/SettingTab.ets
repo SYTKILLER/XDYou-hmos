@@ -8,10 +8,12 @@ import { SessionManager } from '../../service/SessionManager';
 import { PreferenceService } from '../../service/preference/PreferenceService';
 import { AppContext } from '../../service/AppContext';
 import { AppNav } from '../../service/nav/AppNav';
+import { AccountController } from '../../controller/AccountController';
+import { AccountInfo } from '../../model/user/AccountInfo';
 import { Log } from '../../utils/Log';
 
 /**
- * 设置页签（M5）：账号区（尽力真实姓名，回退学号）→ 平台账号管理（校园网自助服务查询密码 /
+ * 设置页签（M5）：账号区（「学在西电」门户真实姓名 + 头像，回退首字占位）→ 平台账号管理（校园网自助服务查询密码 /
  * 实验平台密码 / 体育平台密码 / 宿舍水机手机号登录）→ 偏好（主题种子色 / 深浅色）→ 关于 → 退出登录。
  * 深浅色切换经 ApplicationContext.setColorMode 触发 onConfigurationUpdate，全局（含窗口背景）自动跟随。
  */
@@ -23,6 +25,9 @@ export struct SettingTab {
   @StorageProp('themePrimary') themePrimary: string = '#0A59F7';
   @StorageProp('themePrimaryContainer') themePrimaryContainer: string = '#D0E4FF';
   @StorageProp('settingsVersion') settingsVersion: number = 0;
+  // 账号信息版本：AccountController.bumpVersion 自增；@Watch 复位头像加载失败标记以重试新 URL。
+  @StorageProp('accountVersion') @Watch('onAccountVersionBumped') accountVersion: number = 0;
+  @State avatarLoadFailed: boolean = false;
   @State account: string = PreferenceService.getString('idsAccount', '');
   private dialogController: CustomDialogController = new CustomDialogController({
     builder: SchoolnetPasswordDialog(),
@@ -37,10 +42,31 @@ export struct SettingTab {
     autoCancel: true
   });
 
-  /** 昵称：尽力真实姓名，回退学号。 */
+  aboutToAppear(): void {
+    AccountController.ensureFresh();
+  }
+
+  private onAccountVersionBumped(): void {
+    this.avatarLoadFailed = false;
+  }
+
+  /** 展示名：门户真实姓名优先，回退偏好 displayName，再回退学号（方法内读版本号建立刷新依赖）。 */
   private displayName(): string {
-    const name: string = PreferenceService.getString('displayName', '');
-    return name.length > 0 ? name : this.account;
+    const version: number = this.accountVersion;
+    const info: AccountInfo | null = AccountController.data();
+    const fetched: string = info !== null ? info.realName
+      : PreferenceService.getString('displayName', '');
+    return version >= 0 && fetched.length > 0 ? fetched : this.account;
+  }
+
+  /** 头像 URL：门户头像图床直链；无头像或加载失败回退首字占位。 */
+  private avatarUrl(): string {
+    if (this.avatarLoadFailed) {
+      return '';
+    }
+    const version: number = this.accountVersion;
+    const info: AccountInfo | null = AccountController.data();
+    return version >= 0 && info !== null ? info.avatarUrl : '';
   }
 
   private avatarChar(): string {
@@ -149,6 +175,7 @@ export struct SettingTab {
     SessionManager.clearStore('ids');
     PreferenceService.remove('idsAccount');
     PreferenceService.remove('idsPassword');
+    AccountController.clear();
     AppStorage.setOrCreate('isLoggedIn', false);
   }
 
@@ -173,15 +200,26 @@ export struct SettingTab {
         this.SectionHeader('账号')
 
         Row({ space: 12 }) {
-          Text(this.avatarChar())
-            .width(44)
-            .height(44)
-            .borderRadius(22)
-            .backgroundColor(this.themePrimaryContainer)
-            .fontColor(this.themePrimary)
-            .fontSize(18)
-            .fontWeight(FontWeight.Medium)
-            .textAlign(TextAlign.Center)
+          if (this.avatarUrl().length > 0) {
+            Image(this.avatarUrl())
+              .width(44)
+              .height(44)
+              .borderRadius(22)
+              .objectFit(ImageFit.Cover)
+              .onError(() => {
+                this.avatarLoadFailed = true;
+              })
+          } else {
+            Text(this.avatarChar())
+              .width(44)
+              .height(44)
+              .borderRadius(22)
+              .backgroundColor(this.themePrimaryContainer)
+              .fontColor(this.themePrimary)
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .textAlign(TextAlign.Center)
+          }
 
           Column({ space: 2 }) {
             Text(this.displayName())

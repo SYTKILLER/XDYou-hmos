@@ -29,6 +29,17 @@ export class EnergyController {
     EnergyController.history = EnergySession.getHistory();
   }
 
+  /** 强制重读磁盘缓存并 bump 版本（loadCache 对已有内存结果早退，本方法绕过）：
+   * 首页每次重新可见时调用，兜底电费页刷新后首页瓦片不更新的问题。 */
+  static reloadFromCache(): void {
+    const cached: EnergyInfo | null = EnergySession.getCacheData();
+    if (cached !== null) {
+      EnergyController.result =
+        FetchResult.cached<EnergyInfo>(cached, EnergySession.cacheFetchTime(), '');
+      AppStorage.setOrCreate('energyVersion', (AppStorage.get<number>('energyVersion') ?? 0) + 1);
+    }
+  }
+
   static hasData(): boolean {
     return EnergyController.result !== null;
   }

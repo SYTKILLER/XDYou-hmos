@@ -8,6 +8,7 @@ import { IdsReAuthClient } from '../service/ids/IdsReAuthClient';
 import { ReAuthDialog, ReAuthCoordinator, ReAuthResult } from './ReAuthDialog';
 import { SessionManager } from '../service/SessionManager';
 import { PreferenceService } from '../service/preference/PreferenceService';
+import { AccountController } from '../controller/AccountController';
 import { Log } from '../utils/Log';
 
 /**
@@ -141,6 +142,8 @@ export struct LoginPage {
       this.busy = false;
       this.progressMsg = '';
       AppStorage.setOrCreate('isLoggedIn', true);
+      // 会话正热，后台拉取「学在西电」门户姓名/头像（静默失败，不阻塞进入首页）。
+      AccountController.refresh();
     } catch (e) {
       this.busy = false;
       this.progressMsg = '';
