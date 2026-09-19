@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="icon_preview.png" width="120" alt="XDYou">
+<img src="entry/src/main/resources/base/media/startIcon.png" width="120" alt="XDYou">
 
 # XDYou for HarmonyOS
 
@@ -62,8 +62,6 @@ entry/src/main/ets/
   utils/          HTML 解析 / 字符集 / 加密 / 日期 / 日志
 ```
 
-完整模块清单见 [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)。
-
 ## 构建与运行
 
 1. 安装 [DevEco Studio](https://developer.huawei.com/consumer/cn/deveco-studio/)（需支持 HarmonyOS 6.1.1 / API 24）
@@ -81,15 +79,6 @@ entry/src/main/ets/
    ```
 
 5. 仪器测试位于 `entry/src/ohosTest`（加密向量 / HTML 解析 / 网络工具对拍）
-
-## 项目文档
-
-| 文档 | 内容 |
-| --- | --- |
-| [PORTING_PLAN.md](PORTING_PLAN.md) | 完整移植方案 |
-| [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | 工程结构与模块清单 |
-| [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) | 开发日志 |
-| [NOTICE.md](NOTICE.md) | 踩坑记录 |
 
 ## 许可证
 
